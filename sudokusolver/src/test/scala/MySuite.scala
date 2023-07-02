@@ -37,4 +37,48 @@ class MySuite extends AnyFunSuite {
 
     solvedPuzzle shouldBe expectedPuzzle
   }
+
+  //  1 to 3 : It only verifies if the puzzle is solvable and not malformed
+  test("1: solvable puzzles") {
+    val actual = Main.isSudokuMalformed(
+      List(
+        List(5, 3, 0, 0, 7, 0, 0, 0, 0),
+        List(6, 0, 0, 1, 9, 5, 0, 0, 0),
+        List(0, 9, 8, 0, 0, 0, 0, 6, 0),
+        List(8, 0, 0, 0, 6, 0, 0, 0, 3),
+        List(4, 0, 0, 8, 0, 3, 0, 0, 1),
+        List(7, 0, 0, 0, 2, 0, 0, 0, 6),
+        List(0, 6, 0, 0, 0, 0, 2, 8, 0),
+        List(0, 0, 0, 4, 1, 9, 0, 0, 5),
+        List(0, 0, 0, 0, 8, 0, 0, 7, 9)
+      )
+    )
+    val expected = false
+    actual shouldBe expected
+  }
+
+  test("2: Empty Grids") {
+    val actual = Main.isSudokuMalformed(List.empty)
+    val expected = true
+    actual shouldBe expected
+  }
+
+  test("3: Partially Filled Grids - not 9x9") {
+    val actual = Main.isSudokuMalformed(
+      List(
+        List(5, 3, 0, 0, 7, 0),
+        List(6, 0, 0, 1, 9, 5, 0, 0),
+        List(0, 9, 8, 0, 0, 0, 0, 6, 0),
+        List(8, 0, 0, 0),
+        List(4, 0, 0, 8, 0, 3, 0, 0, 1),
+        List(7, 0, 0, 0, 2, 0, 0, 0, 6),
+        List(0, 6, 0, 0, 0, 0, 2, 8, 0),
+        List(0, 0, 0, 4, 1, 9, 0, 0, 5),
+        List(0, 0, 0, 0, 8, 0)
+      )
+    )
+    val expected = true
+    actual shouldBe expected
+  }
+  
 }
