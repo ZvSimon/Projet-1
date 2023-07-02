@@ -29,6 +29,32 @@ object Main extends ZIOAppDefault {
   def update(sudoku: Board, x: Int, y: Int, value: Int): Board =
     sudoku.take(x) ++ List(sudoku(x).take(y) ++ List(value) ++ sudoku(x).drop(y + 1)) ++ sudoku.drop(x + 1)
 
+    //This function takes a Sudoku board (sudoku) as input and checks if there are no duplicate non-zero elements in any row, column, or grid.
+  def doesntHasSameElementManyTimes(sudoku: Board): Boolean = {
+    sudoku.flatMap(row => row.filter(_ != 0).groupBy(identity).view.mapValues(_.size).find(_._2 > 1)).isEmpty
+  }
+
+  //This function takes a Sudoku board (sudoku) as input and checks if the Sudoku puzzle is malformed, meaning it is not a valid Sudoku puzzle.
+  // It first checks if the size of the Sudoku board is 9x9 by comparing the size of sudoku with 9 and the count of sublists with length 9 with 9.
+  // If the size is correct, it proceeds to perform further validations.
+  // Otherwise, it returns true immediately, indicating a malformed puzzle.
+  def isSudokuMalformed(sudoku: Board): Boolean = {
+    val isTableSizeCorrect = sudoku.size == 9 && sudoku.map(_.length).count(l => l == 9) == 9
+    if (isTableSizeCorrect)
+      val areValuesValidated = !sudoku.flatten.exists(l => l > 9 || l < 0)
+      val areRowsValidated = doesntHasSameElementManyTimes(sudoku)
+      val areColumnsValidated = doesntHasSameElementManyTimes((0 to 8).map(column => sudoku.map(row => row(column))).toList)
+      val areGridsValidated = doesntHasSameElementManyTimes(
+        sudoku
+          .grouped(3)
+          .toList
+          .map(_.transpose.flatten)
+          .flatMap(l => (0 to 2).map(group => l.slice(group * 9, group * 9 + 9)))
+      )
+      !(areValuesValidated && areRowsValidated && areColumnsValidated && areGridsValidated)
+    else true
+  }
+  
   //The solve function is the main solver function.
   // It uses backtracking to find a valid solution for the Sudoku puzzle.
   // It takes a Sudoku board as input, along with optional parameters x and y representing the current position being processed.
