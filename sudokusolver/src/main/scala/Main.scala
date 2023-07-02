@@ -10,6 +10,8 @@ object Main extends ZIOAppDefault {
   // It allows to create instances of MalformedFile with a custom error message 
   // that describes the specific reason for the file being considered malformed.
   case class MalformedFile(message: String) extends IOException(message)
+
+  case class NoSolutionFound(message: String) extends IOException(message)
   
   //Implementation of a Sudoku solver using backtracking.
   // It defines a Board type, which is a 9x9 grid represented as a list of lists of integers.
@@ -100,9 +102,11 @@ object Main extends ZIOAppDefault {
   // If the conversion fails, a Left value is returned, indicating a malformed file. If successful, a Right value is returned with the Sudoku object.
   // If the file is malformed (resulting in a Left value), a MalformedFile error is raised using ZIO.fail.
   // If the file is valid (resulting in a Right value), the Sudoku table within the Sudoku object is checked for any malformation using the isSudokuMalformed function.
-  //If the Sudoku table is malformed, a MalformedFile error is raised.
-  //If the Sudoku table is valid, the solve function is called with the Sudoku table to attempt to find a solution.
-  //If a solution is found (resulting in a non-empty list), the first solution is printed using Console.printLine.
+  // If the Sudoku table is malformed, a MalformedFile error is raised.
+  // If the Sudoku table is not malformed, the solve function is called with the Sudoku table.
+  // If no solution is found, a NoSolutionFound error is raised.
+  // If a solution is found, the first solution is beautified. (Printing)
+  // Error handling is performed using the catchAll method. Different types of errors are matched and appropriate error messages are logged.
   def run: ZIO[Any, Throwable, Unit] = {
     for {
       _ <- Console.print("Enter the path to the JSON file containing the Sudoku problem: ")
@@ -116,11 +120,31 @@ object Main extends ZIOAppDefault {
             case Right(value) => isSudokuMalformed(value.sudoku) match {
               case true => ZIO.fail(MalformedFile(s"Sudoku table is malformed, check all values in '$path'"))
               case false => solve(value.sudoku) match {
+                case Nil => ZIO.fail(NoSolutionFound("We tried every possible move in your sudoku problem, but there is no solution!"))
                 case head :: tail => beautifySudoku(head)
               }
             }
           }
+        }        
+        .catchAll {
+          case error: java.nio.file.NoSuchFileException =>
+            for {
+              _ <- ZIO.logErrorCause("CAN'T find the given file name, check if file exists!", Cause.fail(error))
+            } yield ()
+          case error: MalformedFile =>
+            for {
+              _ <- ZIO.logErrorCause(Cause.fail(error))
+            } yield ()
+          case error: NoSolutionFound =>
+            for {
+              _ <- ZIO.logErrorCause(Cause.fail(error))
+            } yield ()
+          case error =>
+            for {
+              _ <- ZIO.logErrorCause("An exception is occured!", Cause.fail(error))
+            } yield ()
         }
+      
       _ <- Console.printLine("Job is ending...")
     } yield ()
   }
