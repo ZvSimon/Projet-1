@@ -3,6 +3,10 @@ package sudoku
 import zio._
 
 object Main extends ZIOAppDefault {
+
+  // It allows to create instances of MalformedFile with a custom error message 
+  // that describes the specific reason for the file being considered malformed.
+  case class MalformedFile(message: String) extends IOException(message)
   
   //Implementation of a Sudoku solver using backtracking.
   // It defines a Board type, which is a 9x9 grid represented as a list of lists of integers.
@@ -10,6 +14,11 @@ object Main extends ZIOAppDefault {
 
   //The Sudoku case class encapsulates a Sudoku puzzle board.
   case class Sudoku(sudoku: Board)
+
+  // These 2 methods generates a JSON decoder/encoder for the Sudoku class based on its structure
+  // and the available type class instances for decoding/encoding its fields.
+  implicit val decoder: JsonDecoder[Sudoku] = DeriveJsonDecoder.gen[Sudoku]
+  implicit val encoder: JsonEncoder[Sudoku] = DeriveJsonEncoder.gen[Sudoku]
   
   //The validate function checks if a given value can be placed at a specific position (x, y) in the Sudoku board without violating any Sudoku rules.
   // It checks the row, column, and the 3x3 box containing the position for the presence of the value.
@@ -67,11 +76,36 @@ object Main extends ZIOAppDefault {
     case _ => (1 to 9).filter(validate(sudoku, x, y, _)).flatMap { value => solve(update(sudoku, y, x, value), x + 1, y) }.toList
   }
   
-  def run: ZIO[Any, Throwable, Unit] =
+  // Reading the contents of the file specified by the path.
+  // "ZStream.fromFile(new File(path)).runCollect" creates a ZStream from the file and collects all its contents into a chunk.
+  // The collected file contents are then transformed into a String by converting each element of the chunk to a Char and joining them together using mkString.
+  // The resulting String is then parsed as JSON and converted to a Sudoku object using the fromJson function.
+  // If the conversion fails, a Left value is returned, indicating a malformed file. If successful, a Right value is returned with the Sudoku object.
+  // If the file is malformed (resulting in a Left value), a MalformedFile error is raised using ZIO.fail.
+  // If the file is valid (resulting in a Right value), the Sudoku table within the Sudoku object is checked for any malformation using the isSudokuMalformed function.
+  //If the Sudoku table is malformed, a MalformedFile error is raised.
+  //If the Sudoku table is valid, the solve function is called with the Sudoku table to attempt to find a solution.
+  //If a solution is found (resulting in a non-empty list), the first solution is printed using Console.printLine.
+  def run: ZIO[Any, Throwable, Unit] = {
     for {
-      _ <- Console.print("Enter the path to the JSON file containing the Sudoku problem:")
+      _ <- Console.print("Enter the path to the JSON file containing the Sudoku problem: ")
       path <- Console.readLine
-      _ <-  Console.printLine(s"You entered: $path")
-      // Add your Sudoku solver logic here, utilizing ZIO and interacting with the ZIO Console
+      _ <- Console.printLine(s"You entered: $path")
+      file <- ZStream.fromFile(new File(path))
+        .runCollect
+        .flatMap {
+          _.toList.map(_.toChar).mkString.fromJson[Sudoku] match {
+            case Left(value) => ZIO.fail(MalformedFile(s"file is malformed, can NOT decode json file to Scala Class! Please check your json file '$path'"))
+            case Right(value) => isSudokuMalformed(value.sudoku) match {
+              case true => ZIO.fail(MalformedFile(s"Sudoku table is malformed, check all values in '$path'"))
+              case false => solve(value.sudoku) match {
+                case head :: tail => Console.printLine(head)
+              }
+            }
+          }
+        }
+      _ <- Console.printLine("Job is ending...")
     } yield ()
+  }
+  
 }
