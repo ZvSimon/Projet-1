@@ -16,6 +16,8 @@ lazy val root = project
       "dev.zio" %% "zio-nio" % "2.0.1", // "2.0.1"
     ).map(_ % Compile),
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "munit" % "0.7.29"
+      "org.scalameta" %% "munit" % "0.7.29",
+      //scala test
+      "org.scalatest" %% "scalatest" % "3.2.16"
     ).map(_ % Test)
   )
