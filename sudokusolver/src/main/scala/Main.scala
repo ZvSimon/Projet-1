@@ -1,6 +1,9 @@
 package sudoku
 
-import zio._
+import zio.*
+import zio.stream.ZStream
+import java.io.{File, IOException}
+import zio.json.*
 
 object Main extends ZIOAppDefault {
 
@@ -19,6 +22,20 @@ object Main extends ZIOAppDefault {
   // and the available type class instances for decoding/encoding its fields.
   implicit val decoder: JsonDecoder[Sudoku] = DeriveJsonDecoder.gen[Sudoku]
   implicit val encoder: JsonEncoder[Sudoku] = DeriveJsonEncoder.gen[Sudoku]
+
+  val header: String = "+-------+-------+-------+"
+
+  // The purpose of this function is to take a sudoku board, format it with appropriate separators and line breaks,
+  // and print the beautified board to the console using Console.printLine.
+  // The purpose of this function is to beautify and print the provided sudoku board to the console.
+  def beautifySudoku(sudoku: Board): IO[IOException, Unit] = Console.printLine(
+    "Solution\n".concat(
+      sudoku
+        .grouped(3)
+        .map(_.map(_.grouped(3).map(_.mkString(" ", " ", " ")).mkString("|", "|", "|")).mkString("\n"))
+        .mkString(s"$header\n", s"\n$header\n", s"\n$header")
+    )
+  )
   
   //The validate function checks if a given value can be placed at a specific position (x, y) in the Sudoku board without violating any Sudoku rules.
   // It checks the row, column, and the 3x3 box containing the position for the presence of the value.
@@ -99,7 +116,7 @@ object Main extends ZIOAppDefault {
             case Right(value) => isSudokuMalformed(value.sudoku) match {
               case true => ZIO.fail(MalformedFile(s"Sudoku table is malformed, check all values in '$path'"))
               case false => solve(value.sudoku) match {
-                case head :: tail => Console.printLine(head)
+                case head :: tail => beautifySudoku(head)
               }
             }
           }
