@@ -180,6 +180,44 @@ class MySuite extends AnyFunSuite {
     val expected = true
     actual shouldBe expected
   }
+
+  //In this case, the Sudoku puzzle includes the number -5, which is a negative number and therefore considered invalid.
+  test("9: Incorrect numbers in puzzles (outside the 0-9 number range) - negative numbers.") {
+    val actual = Main.isSudokuMalformed(
+      List( //-5
+        List(-5, 3, 0, 0, 7, 0, 0, 0, 0),
+        List(6, 0, 0, 1, 9, 5, 0, 0, 0),
+        List(0, 9, 8, 0, 0, 0, 0, 6, 0),
+        List(8, 0, 0, 0, 6, 0, 0, 0, 3),
+        List(4, 0, 0, 8, 0, 3, 0, 0, 1),
+        List(7, 0, 0, 0, 2, 0, 0, 0, 6),
+        List(0, 6, 0, 0, 0, 0, 2, 8, 0),
+        List(0, 0, 0, 4, 1, 9, 0, 0, 5),
+        List(0, 0, 0, 0, 8, 0, 0, 7, 9)
+      )
+    )
+    val expected = true
+    actual shouldBe expected
+  }
+
+  //In this case, the Sudoku puzzle includes the number 55, which is a greater number than 9 and therefore considered invalid.
+  test("10 :Incorrect numbers in puzzles (outside the 0-9 number range) - numbers greater than 9.") {
+    val actual = Main.isSudokuMalformed(
+      List( //55
+        List(55, 3, 0, 0, 7, 0, 0, 0, 0),
+        List(6, 0, 0, 1, 9, 5, 0, 0, 0),
+        List(0, 9, 8, 0, 0, 0, 0, 6, 0),
+        List(8, 0, 0, 0, 6, 0, 0, 0, 3),
+        List(4, 0, 0, 8, 0, 3, 0, 0, 1),
+        List(7, 0, 0, 0, 2, 0, 0, 0, 6),
+        List(0, 6, 0, 0, 0, 0, 2, 8, 0),
+        List(0, 0, 0, 4, 1, 9, 0, 0, 5),
+        List(0, 0, 0, 0, 8, 0, 0, 7, 9)
+      )
+    )
+    val expected = true
+    actual shouldBe expected
+  }
   
   
 }
